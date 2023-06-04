@@ -22,9 +22,13 @@ class AssetLoader:
         
     def load(self):
         self.load_all()
+        self.load_audio()
         self.load_player()
         self.load_ids()
         self.load_deatheffects()
+        
+    def load_audio(self):
+        self.assets["fx-sounds"] = load_sounds("fx")
         
     def load_all(self):
         self.assets["bg"] = import_bgs("bg",False)

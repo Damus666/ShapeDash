@@ -15,7 +15,7 @@ class Editor(GameState):
         self.selected_objects = []
         self.grid_x_amount = range((WIDTH//BLOCK_SIZE)+1)
         self.grid_active = self.snap_grid = True
-        self.multiselect_active, self.top_border = False
+        self.multiselect_active = self.top_border = False
         self.was_pressing = self.was_pressing_right = False
         self.paused = self.was_paused = False
         self.selected_build = ("blocks","classic")
@@ -37,6 +37,7 @@ class Editor(GameState):
         level_data = {
             "name":self.data.level_name,
             "description":self.data.level_description,
+            "music":self.data.level_music,
             "start_gamemode":self.data.start_gamemode,
             "start_speed":self.data.start_speed,
             "bg_color":self.data.bg_color,
@@ -63,6 +64,7 @@ class Editor(GameState):
         self.data.bg_color = level_data["bg_color"]
         self.data.ground_color = level_data["ground_color"]
         self.data.level_description = level_data["description"]
+        self.data.level_music = level_data["music"]
         self.background.refresh_bg_idx()
         self.background.refresh_gd_idx()
         self.ui.bg_col_surf.fill(self.data.bg_color)
@@ -80,8 +82,12 @@ class Editor(GameState):
     # build
     def interaction_build(self, obj):
         if (obj.category != self.selected_build[0] and obj.name == self.selected_build[1]) or \
-            (obj.category == self.selected_build[0] and obj.name != self.selected_build[1]):
-            self.build_selected()
+            (obj.category == self.selected_build[0] and obj.name != self.selected_build[1]): pass
+        else: return
+        for o in self.all:
+            if o.category == self.selected_build[0] and o.name == self.selected_build[1]:
+                if o.rect.topleft == obj.rect.topleft: return
+        self.build_selected()
         
     def build_selected(self):
         obj = Object(self.selected_build,(Input.mouse_pos[0]+self.offset,Input.mouse_pos[1]),self,[self.all,self.visible])
@@ -219,6 +225,7 @@ class EditorData:
     def __init__(self, editor):
         self.editor = editor
         self.level_name, self.level_description = "Unnamed 0", ""
+        self.level_music = "Stereo Madness"
         self.start_gamemode, self.start_speed = "cube", "1x"
         self.bg_color = self.ground_color = (0,105,255)
         self.bg_index = self.ground_index = 0

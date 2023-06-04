@@ -15,8 +15,8 @@ class EditorUI:
         # images
         self.small_bg_imgs = [pygame.transform.scale_by(img,0.1261) for img in self.editor.background.bg_assets]
         self.small_gd_imgs = [pygame.transform.scale_by(img,0.5) for img in self.editor.background.ground_assets]
-        self.bg_col_surf = pygame.Surface((100,100))
-        self.gd_col_surf = pygame.Surface((100,100))
+        self.bg_col_surf = pygame.Surface((180,100))
+        self.gd_col_surf = pygame.Surface((180,100))
         self.bg_col_surf.fill(self.editor.data.bg_color)
         self.gd_col_surf.fill(self.editor.data.ground_color)
         # rects
@@ -183,6 +183,7 @@ class EditorUI:
         damgui.end()
         if not self.settings_open: return
         self.center_win("settings_win","Settings",(H_WIDTH,H_HEIGHT),offset=(0,-100))
+        damgui.container("bggdimgcol_cont",(10,10),False,True,False,True)
         # bg gd image
         damgui.label("bggdindex_l","Background and ground image:")
         _, bg_index = damgui.slideshow("bg_idx_slides",self.small_bg_imgs,False,self.editor.data.bg_index)
@@ -215,6 +216,17 @@ class EditorUI:
                 self.editor.data.ground_color = newcolor
                 self.editor.background.refresh_gd_color()
                 self.gd_col_surf.fill(newcolor)
+        damgui.end()
+        # music
+        cont_h= self.Stack.memory["bggdimgcol_cont"]["sy"]
+        damgui.place_side().container("musicsel_cont",(350,cont_h),False,False,False,True)
+        damgui.label("musicsel_l","Level music:")
+        cont_h -= self.Stack.memory["musicsel_l"]["sy"]+guiconf.Y_MARGIN*3
+        if cont_h < 10: cont_h = 10
+        sel_music = damgui.selection_list("musicsel_sl",LEVEL_MUSICS,False,(340,cont_h),False)
+        if sel_music:
+            if sel_music != self.editor.data.level_music: self.editor.data.level_music = sel_music
+        damgui.end()
         # start gamemode speed
         damgui.label("gamemode_l",f"Start gamemode and speed (Selected: {self.editor.data.start_gamemode.title()}, {self.editor.data.start_speed}):")
         for i,name in enumerate(GAMEMODES_SPEEDS):

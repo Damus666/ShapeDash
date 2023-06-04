@@ -1,4 +1,3 @@
-from typing import Iterable, Union
 import pygame, json
 from pygame.sprite import AbstractGroup
 from settings import *
@@ -11,6 +10,8 @@ from assetloader import AssetLoader
 class Level:
     def __init__(self, game):
         self.game = game
+        self.display_surface = get_window()
+        
         self.all = pygame.sprite.Group()
         self.collidable = pygame.sprite.Group()
         self.updates = pygame.sprite.Group()
@@ -31,6 +32,7 @@ class Level:
         self.draws = DrawGroup()
         
         self.speed = SPEEDS[self.data.start_speed]
+        self.pause_btn = MenuButton(self.assets["ui"]["pause"],(WIDTH-SPACING-self.assets["ui"]["pause"].get_width(),SPACING),True)
         self.player.reset()
         
     def exit(self):
@@ -50,6 +52,7 @@ class Level:
         self.data.bg_color = level_data["bg_color"]
         self.data.ground_color = level_data["ground_color"]
         self.data.level_description = level_data["description"]
+        self.data.level_music = level_data["music"]
         # apply data
         self.change_speed(self.data.start_speed)
         self.player.set_gamemode(self.data.start_gamemode)
@@ -65,15 +68,19 @@ class Level:
                     if block_data["name"] in DAMAGING: Damaging(block_data["name"],block_data["pos"],self)
                     else: Object(("objects",block_data["name"]),block_data["pos"],self,[self.all,self.visible])
         self.player.reset()
-        self.game.main.menu.data.bg_color = self.data.bg_color
-        self.game.main.menu.data.ground_color = self.data.ground_color
+        menu_data = self.game.main.menu.data
+        menu_data.bg_index = self.data.bg_index
+        menu_data.ground_index = self.data.ground_index
+        menu_data.bg_color = self.data.bg_color
+        menu_data.ground_color = self.data.ground_color
+        menu_data.menu.background.refresh_bg_idx()
+        menu_data.menu.background.refresh_gd_idx()
         
     def set_top_border(self, value): self.top_border = value
     def change_speed(self, speed_name): self.speed = SPEEDS[speed_name]
     
     # update
-    def event(self, event):
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE: quit_all()
+    def event(self, event): pass
         
     def update(self, dt):
         self.offset.x = self.player.rect.centerx - PLAYER_X
@@ -81,6 +88,7 @@ class Level:
         self.background.update(dt)
         self.player.update(dt)
         self.updates.update(dt)
+        if self.pause_btn.check(): self.game.pause()
         
     def draw(self):
         self.background.draw()
@@ -89,11 +97,13 @@ class Level:
         self.player.draw()
         self.visible_top.custom_draw(self.offset)
         self.background.draw_after()
+        if not self.game.paused: self.pause_btn.draw(self.display_surface)
         
 class LevelData:
     def __init__(self, level):
         self.level = level
         self.level_name, self.level_description = "Unnamed 0", ""
+        self.level_music = "Stereo Madness"
         self.start_gamemode, self.start_speed = "cube", "1x"
         self.bg_color = self.ground_color = (0,105,255)
         self.bg_index = self.ground_index = 0

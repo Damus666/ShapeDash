@@ -71,12 +71,16 @@ class Player(Generic):
             case _: self.level.change_speed(name)
         
     def trigger_trigger(self, trigger): trigger.activate()
-    def finalize_death(self): self.reset()
+    def finalize_death(self):
+        self.reset()
+        self.level.game.main.music.restart_music()
     def damage_collision(self): self.die()
         
     def die(self):
         deatheffect = self.deatheffect if self.deatheffect != 0 else choice(TRAILS)
         if not self.deatheffect_obj: self.deatheffect_obj = DeathEffect(deatheffect,self.rect.center,self.level)
+        self.level.game.main.music.stop_music()
+        self.level.game.main.music.play_fx("explode_11")
         
     def reset(self):
         self.pos.x = -1200

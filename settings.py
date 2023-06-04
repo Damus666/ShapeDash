@@ -126,6 +126,29 @@ ORBS_COLORS = {
     "red":["dark orange","red","red"],
 }
 
+LEVEL_MUSICS = [
+    "Stereo Madness",
+    "Back On Track",
+    "Polargeist",
+    "Dry Out",
+    "Base After Base",
+    "Cycles",
+    "Cant Let Go",
+    "Jumper",
+    "Time Machine",
+    "xStep",
+    "Theory Of Everything",
+    "Electroman",
+    "Clubstep",
+    "Electrodynamix",
+    "Hexagon Force",
+    "Blast Processing",
+    "Theory Of Everything 2",
+    "Geometrical Dominator",
+    "Deadlocked",
+    "Fingerdash"
+]
+
 # EDITOR
 GRID_THICKNESS = 1
 SPACING = 10
@@ -145,7 +168,7 @@ BUILD_CARD_H = 80
 
 # menu
 MENU_SPEED = 200
-WAIT_CD = 70
+WAIT_CD = 100
 
 # numeric
 ONE_OVER_1000 = 1/1000
@@ -153,14 +176,50 @@ IDEAL_DEW = 280
 
 # SUPPORT
 
+# button
+class MenuButton:
+    def __init__(self, image, pos, topleft=False):
+        self.image = image
+        self.rect = self.image.get_rect(center=pos)
+        if topleft: self.rect.topleft = pos
+        self.clicking = False
+        
+    def draw(self, screen): screen.blit(self.image,self.rect)
+        
+    def check(self):
+        if Input.mouse_pressed[0]:
+            if not self.clicking:
+                self.clicking = True
+                if self.rect.collidepoint(Input.mouse_pos): return True
+        else: self.clicking = False
+        return False
+
 # generic
-def quit_all(): pygame.quit(); sys.exit()
+def quit_all():
+    print(f"{TITLE} is quitting")
+    pygame.quit(); sys.exit()
 def get_window(): return pygame.display.get_surface()
 
 def list_remove_cond(iterable, condition):
     toremove = [el for el in iterable if condition(el)]
     for e in toremove: iterable.remove(e)
     
+# audio
+def load_audio(path, volume=1, type_="mp3"):
+    sound = pygame.mixer.Sound(f"assets/audio/{path}.{type_}")
+    sound.set_volume(volume)
+    return sound
+    
+def load_sounds(path, volume=1):
+    sounds = {}
+    for _, __, files in walk(f"assets/audio/{path}"):
+        for file in files:
+            full_path = f"assets/audio/{path}/{file}"
+            sound = pygame.mixer.Sound(full_path)
+            sound.set_volume(volume)
+            sounds[file.split(".")[0]] = sound
+    return sounds
+        
 # input
 class Input:
     mouse_pos = (0,0)

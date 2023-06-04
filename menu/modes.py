@@ -22,9 +22,12 @@ class MenuMainScreen(MenuMode):
         super().__init__(menu)
         
         self.logo_surf = self.ui_assets["logo"];self.logo_rect = self.logo_surf.get_rect(center=(H_WIDTH,H_HEIGHT-HH_HEIGHT*1.2))
-        self.play_btn = MenuButton(self.ui_assets["play-main"],(H_WIDTH,H_HEIGHT))
-        self.edit_btn = MenuButton(self.ui_assets["edit-main"],(H_WIDTH+HH_WIDTH//(2.3*WIN_SCALE_X),H_HEIGHT))
-        self.icon_btn = MenuButton(self.ui_assets["icon-main"],(H_WIDTH-HH_WIDTH//(2.3*WIN_SCALE_X),H_HEIGHT))
+        images_scale = 1.4
+        self.play_btn = MenuButton(pygame.transform.scale_by(self.ui_assets["play-main-2"],images_scale),(H_WIDTH,H_HEIGHT+HH_HEIGHT//4))
+        self.edit_btn = MenuButton(pygame.transform.scale_by(self.ui_assets["edit-main-2"],images_scale),
+                                   (H_WIDTH+HH_WIDTH//((2.3*WIN_SCALE_X)/images_scale),H_HEIGHT+HH_HEIGHT//4))
+        self.icon_btn = MenuButton(pygame.transform.scale_by(self.ui_assets["icon-main-2"],images_scale),
+                                   (H_WIDTH-HH_WIDTH//((2.3*WIN_SCALE_X)/images_scale),H_HEIGHT+HH_HEIGHT//4))
         self.close_btn = MenuButton(self.ui_assets["close"],(WIDTH-self.ui_assets["close"].get_width()-SPACING,SPACING),True)
         
     def update(self, dt):
@@ -43,6 +46,9 @@ class MenuMainScreen(MenuMode):
         self.close_btn.draw(self.display_surface)
         
     def on_change(self): self.change_time = pygame.time.get_ticks()
+    
+    def event(self, event):
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE: quit_all()
         
 class MenuIconkit(MenuMode):
     def __init__(self, menu):
@@ -92,6 +98,7 @@ class MenuLevelList(MenuMode):
         level_data = {
             "name":name,
             "description":"No description",
+            "music":"StereoMadness",
             "start_gamemode":"cube",
             "start_speed":"1x",
             "bg_color":(0,105,255),
@@ -101,6 +108,7 @@ class MenuLevelList(MenuMode):
             "blocks":[]
         }
         with open(f"data/levels/{name}.json","w") as level_file: json.dump(level_data,level_file)
+        self.menu.main.debugger.level_created(name)
         
     def on_change(self):
         self.level_names = []
@@ -117,15 +125,15 @@ class MenuLevelList(MenuMode):
         guiconf.set_font_size("xxl")
         damgui.begin("levellist_win","",self.cont_rect.topleft,self.cont_rect.size,False,False,False,True)
         (win:=self.Stack.memory["levellist_win"])["bg"] = False; win["outline"] = False
+        self.gui.btn_style()
         for level_name in self.level_names:
-            self.gui.btn_style()
             damgui.label(f"{level_name}_label",f" {level_name}")
             damgui.place_side().separator((self.cont_rect.w-30-self.viewbtn_w-self.Stack.last_element["sx"],10))
             if damgui.place_side().image_button(f"{level_name}_viewbtn",self.viewbtn_surf):
                 self.menu.set_level(level_name)
                 self.menu.change_mode("details")
-            self.gui.btn_style_end()
-            damgui.line(self.cont_rect.w-10,2,10)
+            damgui.separator((10,5))
+        self.gui.btn_style_end()
         guiconf.reset_font_size()
         damgui.end()
         
@@ -153,7 +161,8 @@ class MenuLevelDetails(MenuMode):
         
         self.back_button = MenuButton(self.ui_assets["back"],(SPACING,SPACING),True)
         self.play_btn = MenuButton(self.ui_assets["play-big"],(H_WIDTH+SPACING,H_HEIGHT-imgsz//1.5),True)
-        self.edit_btn = MenuButton(self.ui_assets["edit-big"],(H_WIDTH-imgsz-SPACING,H_HEIGHT-imgsz//1.5),True)
+        editimg = pygame.transform.scale_by(self.ui_assets["edit-big"],0.82); editimgw = editimg.get_width()
+        self.edit_btn = MenuButton(editimg,(H_WIDTH-imgsz+editimgw//2,H_HEIGHT-editimgw//1.5+editimgw//2-SPACING),False)
         self.del_btn = MenuButton(self.ui_assets["trash"],(WIDTH-self.ui_assets["trash"].get_width()-SPACING,SPACING),True)
         
     def play(self):
@@ -170,6 +179,7 @@ class MenuLevelDetails(MenuMode):
         with open("data/levels.json","w") as levels_file: json.dump(levels_list,levels_file)
         os.remove(f"data/levels/{self.old_name}.json")
         self.menu.change_mode("levels")
+        self.menu.main.debugger.level_deleted(self.l_name)
         
     def refresh_name_img(self):
         self.name_surf = self.assets["fonts"]["xxl"].render(self.l_name,True,"gold")
@@ -259,20 +269,3 @@ class MenuPlayLevels(MenuMode):
             if event.key == pygame.K_ESCAPE: self.menu.change_mode("main")
             
     def on_change(self): self.change_time = pygame.time.get_ticks()
-        
-class MenuButton:
-    def __init__(self, image, pos, topleft=False):
-        self.image = image
-        self.rect = self.image.get_rect(center=pos)
-        if topleft: self.rect.topleft = pos
-        self.clicking = False
-        
-    def draw(self, screen): screen.blit(self.image,self.rect)
-        
-    def check(self):
-        if Input.mouse_pressed[0]:
-            if not self.clicking:
-                self.clicking = True
-                if self.rect.collidepoint(Input.mouse_pos): return True
-        else: self.clicking = False
-        return False
